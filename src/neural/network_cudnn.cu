@@ -511,7 +511,8 @@ void expandPlanes_Fp16_NHWC(half* output, const uint64_t* masks,
 }
 
 __global__ void globalScale_kernel(float* output, const float* input,
-                                   const float* scale, int inputSize) {
+                                   const float* scale, int inputSize,
+                                   int channels) {
   const int kPlaneSize = 64;
 
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -521,10 +522,12 @@ __global__ void globalScale_kernel(float* output, const float* input,
   float val1 = input[tid];   // skip connection
   float val2 = output[tid];  // output of residual block to be scaled
 
-  int sIndex = tid / kPlaneSize;
-  float s = scale[sIndex];
+  int sIndex = tid / kPlaneSize; // N * C
+  int batch = sIndex / channels;
+  float gamma = scale[sIndex + batch * channels];
+  float beta = scale[sIndex + channels + batch * channels];
 
-  float op = val1 * s + val2;
+  float op = gamma * val1 + beta + val2;
   if (op < 0) op = 0;
   output[tid] = op;
 }
@@ -888,7 +891,7 @@ void GlobalScaleLayer<float>::Eval(int N, float* output, const float* input,
   const int kBlocks = DivUp(N * H * W * C, kBlockSize);
 
   globalScale_kernel<<<kBlocks, kBlockSize>>>(output, input, input2,
-                                              N * C * H * W);
+                                              N * C * H * W, C);
 
   ReportCUDAErrors(cudaGetLastError());
 }
@@ -901,6 +904,8 @@ void GlobalScaleLayer<half>::Eval(int N, half* output, const half* input,
   // each thread writes one output
   const int kBlockSize = 256;
   const int kBlocks = DivUp(N * H * W * C, kBlockSize);
+
+  throw Exception("fp16 not implemented");
 
   globalScale_kernel_fp16_nhwc<<<kBlocks, kBlockSize>>>(
       output, input, input2, N * C * H * W, C, H * W * C);
@@ -1346,7 +1351,7 @@ class CudnnNetwork : public Network {
         network_.emplace_back(std::move(fc1));
 
         auto fc2 = std::make_unique<FCLayer<DataType>>(
-            getLastLayer(), kNumFilters, 1, 1, false, true, false, true);
+            getLastLayer(), 2 * kNumFilters, 1, 1, false, true, false, false);
         fc2->LoadWeights(&weights.residual[block].se.w2[0],
                          &weights.residual[block].se.b2[0], scratch_mem_);
         network_.emplace_back(std::move(fc2));
