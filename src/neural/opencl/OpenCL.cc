@@ -482,6 +482,7 @@ void OpenCL_Network::squeeze_excitation(int channels,
                                         cl::Buffer& bufferResidual,
                                         int batch_size) const {
 
+  // FiLM-like SE-unit (Scale and bias, no sigmoid)
   constexpr int width = 8;
 
   cl::Kernel & pooling_kernel = opencl_thread_data.m_global_avg_pooling_kernel;
@@ -516,15 +517,16 @@ void OpenCL_Network::squeeze_excitation(int channels,
                weights + 3,
                bufferTemp1,
                fc_outputs,
-               channels,
+               2 * channels,
                false,
                batch_size);
 
   try {
-    apply_se_kernel.setArg(0, batch_size * channels);
-    apply_se_kernel.setArg(1, bufferIn);
-    apply_se_kernel.setArg(2, bufferResidual);
-    apply_se_kernel.setArg(3, bufferTemp1);
+    apply_se_kernel.setArg(0, channels);
+    apply_se_kernel.setArg(1, batch_size);
+    apply_se_kernel.setArg(2, bufferIn);
+    apply_se_kernel.setArg(3, bufferResidual);
+    apply_se_kernel.setArg(4, bufferTemp1);
 
     queue.enqueueNDRangeKernel(apply_se_kernel, cl::NullRange,
                                cl::NDRange(width, batch_size * channels));
