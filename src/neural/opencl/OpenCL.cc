@@ -163,7 +163,7 @@ void OpenCL_Network::forward(const std::vector<net_t>& input,
         max_batch_size * width * height * max_channels * sizeof(net_t);
     const auto alloc_vm_size =
         max_batch_size * WINOGRAD_TILE * m_ceil * n_ceil * sizeof(net_t);
-    const auto alloc_pool_size = max_batch_size * max_channels * sizeof(net_t);
+    const auto alloc_pool_size = max_batch_size * 2 * max_channels * sizeof(net_t);
 
     auto v_zeros = std::vector<float>(alloc_vm_size);
 
