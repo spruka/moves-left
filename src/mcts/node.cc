@@ -238,9 +238,9 @@ void Node::CancelScoreUpdate(int multivisit) {
   best_child_cached_ = nullptr;
 }
 
-void Node::FinalizeScoreUpdate(float v, int multivisit) {
+void Node::FinalizeScoreUpdate(float v, int multivisit, float soft_fpu) {
   // Recompute Q.
-  q_ += multivisit * (v - q_) / (n_ + multivisit);
+  q_ += multivisit * (v - q_) / (soft_fpu + n_ + multivisit);
   // If first visit, update parent's sum of policies visited at least once.
   if (n_ == 0 && parent_ != nullptr) {
     parent_->visited_policy_ += parent_->edges_[index_].GetP();
