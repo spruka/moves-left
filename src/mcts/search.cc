@@ -888,6 +888,13 @@ SearchWorker::NodeToProcess SearchWorker::PickNodeToExtend(
 
   // Fetch the current best root node visits for possible smart pruning.
   const int64_t best_node_n = search_->current_best_edge_.GetN();
+  const float best_node_q = search_->current_best_edge_.GetQ(0.0f);
+
+  // For negative drawscore and negative Q slope the drawscore towards 0.
+  const float k = params_.GetDrawScoreSlope();
+  const float dyn_drawscore = std::max(params_.GetDrawScore(),
+                                       k * std::min(best_node_q, 0.0f));
+  const float own_drawscore = params_.GetDrawScore() - dyn_drawscore;
 
   // True on first iteration, false as we dive deeper.
   bool is_root_node = true;
@@ -961,7 +968,12 @@ SearchWorker::NodeToProcess SearchWorker::PickNodeToExtend(
         }
         ++possible_moves;
       }
-      const float QD = child.GetQD(fpu, params_.GetDrawScore(), params_.GetLogitQ());
+      // Use zero drawscore for opponent.
+      float drawscore = 0.0f;
+      if (depth % 2 == 1) {
+        drawscore = own_drawscore;
+      }
+      const float QD = child.GetQD(fpu, drawscore, params_.GetLogitQ());
       const float score = child.GetU(puct_mult) + QD;
       if (score > best) {
         second_best = best;

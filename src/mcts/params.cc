@@ -200,9 +200,13 @@ const OptionId SearchParams::kKLDGainAverageInterval{
     "Used to decide how frequently to evaluate the average KLDGainPerNode to "
     "check the MinimumKLDGainPerNode, if specified."};
 const OptionId SearchParams::kDrawScoreId{
-    "draw-score", "Draw-Score",
+    "drawscore", "DrawScore",
     "Score to assign for draws in range [-1, 1], where -1 is loss and +1 is win."
     "Used for choosing the best move."};
+const OptionId SearchParams::kDrawScoreSlopeId{
+    "drawscore-slope", "DrawScoreSlope",
+    "If root Q is negative scale drawscore towards zero linearly as a function "
+    "of root Q with slope controlled by this parameter."};
 
 void SearchParams::Populate(OptionsParser* options) {
   // Here the uci optimized defaults" are set.
@@ -251,7 +255,8 @@ void SearchParams::Populate(OptionsParser* options) {
   options->HideOption(kNoiseEpsilonId);
   options->HideOption(kNoiseAlphaId);
   options->HideOption(kLogLiveStatsId);
-  options->Add<FloatOption>(kDrawScoreId, -1.0f, 1.0f) = 0.0f;
+  options->Add<FloatOption>(kDrawScoreId, -1.0f, 1.0f) = -0.25f;
+  options->Add<FloatOption>(kDrawScoreSlopeId, 0.0f, 10.0f) = 0.40f;
 }
 
 SearchParams::SearchParams(const OptionsDict& options)
@@ -286,5 +291,6 @@ SearchParams::SearchParams(const OptionsDict& options)
       kHistoryFill(
           EncodeHistoryFill(options.Get<std::string>(kHistoryFillId.GetId()))),
       kMiniBatchSize(options.Get<int>(kMiniBatchSizeId.GetId())),
-      kDrawScore(options.Get<float>(kDrawScoreId.GetId())) {}
+      kDrawScore(options.Get<float>(kDrawScoreId.GetId())),
+      kDrawScoreSlope(options.Get<float>(kDrawScoreSlopeId.GetId())) {}
 }  // namespace lczero
