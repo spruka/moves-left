@@ -889,6 +889,9 @@ SearchWorker::NodeToProcess SearchWorker::PickNodeToExtend(
   // Fetch the current best root node visits for possible smart pruning.
   const int64_t best_node_n = search_->current_best_edge_.GetN();
 
+  const float own_drawscore = params_.GetDrawScore();
+  const float opp_drawscore = params_.GetOpponentDrawScore();
+
   // True on first iteration, false as we dive deeper.
   bool is_root_node = true;
   uint16_t depth = 0;
@@ -961,7 +964,13 @@ SearchWorker::NodeToProcess SearchWorker::PickNodeToExtend(
         }
         ++possible_moves;
       }
-      const float QD = child.GetQD(fpu, params_.GetDrawScore(), params_.GetLogitQ());
+      float drawscore;
+      if (depth % 2 == 1) {
+        drawscore = own_drawscore;
+      } else {
+        drawscore = opp_drawscore;
+      }
+      const float QD = child.GetQD(fpu, drawscore, params_.GetLogitQ());
       const float score = child.GetU(puct_mult) + QD;
       if (score > best) {
         second_best = best;
