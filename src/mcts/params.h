@@ -102,6 +102,7 @@ class SearchParams {
   }
   float GetDrawScore() const { return kDrawScore; }
   float GetDrawScoreSlope() const { return kDrawScoreSlope; }
+  float GetDrawScoreOffset() const { return kDrawScoreOffset; }
 
   // Search parameter IDs.
   static const OptionId kMiniBatchSizeId;
@@ -140,6 +141,7 @@ class SearchParams {
   static const OptionId kKLDGainAverageInterval;
   static const OptionId kDrawScoreId;
   static const OptionId kDrawScoreSlopeId;
+  static const OptionId kDrawScoreOffsetId;
 
  private:
   const OptionsDict& options_;
@@ -171,6 +173,7 @@ class SearchParams {
   const int kMiniBatchSize;
   const float kDrawScore;
   const float kDrawScoreSlope;
+  const float kDrawScoreOffset;
 };
 
 }  // namespace lczero

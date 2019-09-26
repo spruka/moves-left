@@ -892,8 +892,9 @@ SearchWorker::NodeToProcess SearchWorker::PickNodeToExtend(
 
   // For negative drawscore and negative Q slope the drawscore towards 0.
   const float k = params_.GetDrawScoreSlope();
-  const float dyn_drawscore = std::max(params_.GetDrawScore(),
-                                       k * std::min(best_node_q, 0.0f));
+  const float offset = params_.GetDrawScoreOffset();
+  const float dyn_drawscore = std::max(std::min(params_.GetDrawScore(), 0.0f),
+                                       k * std::min(best_node_q + offset, 0.0f));
   const float own_drawscore = params_.GetDrawScore() - dyn_drawscore;
 
   // True on first iteration, false as we dive deeper.

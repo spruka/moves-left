@@ -207,6 +207,9 @@ const OptionId SearchParams::kDrawScoreSlopeId{
     "drawscore-slope", "DrawScoreSlope",
     "If root Q is negative scale drawscore towards zero linearly as a function "
     "of root Q with slope controlled by this parameter."};
+const OptionId SearchParams::kDrawScoreOffsetId{
+    "drawscore-offset", "DrawScoreOffset",
+    "Q value offset where to start the drawscore slope for negative Q."};
 
 void SearchParams::Populate(OptionsParser* options) {
   // Here the uci optimized defaults" are set.
@@ -257,6 +260,7 @@ void SearchParams::Populate(OptionsParser* options) {
   options->HideOption(kLogLiveStatsId);
   options->Add<FloatOption>(kDrawScoreId, -1.0f, 1.0f) = -0.25f;
   options->Add<FloatOption>(kDrawScoreSlopeId, 0.0f, 10.0f) = 0.40f;
+  options->Add<FloatOption>(kDrawScoreOffsetId, -1.0f, 1.0f) = 0.00f;
 }
 
 SearchParams::SearchParams(const OptionsDict& options)
@@ -292,5 +296,6 @@ SearchParams::SearchParams(const OptionsDict& options)
           EncodeHistoryFill(options.Get<std::string>(kHistoryFillId.GetId()))),
       kMiniBatchSize(options.Get<int>(kMiniBatchSizeId.GetId())),
       kDrawScore(options.Get<float>(kDrawScoreId.GetId())),
-      kDrawScoreSlope(options.Get<float>(kDrawScoreSlopeId.GetId())) {}
+      kDrawScoreSlope(options.Get<float>(kDrawScoreSlopeId.GetId())),
+      kDrawScoreOffset(options.Get<float>(kDrawScoreOffsetId.GetId())) {}
 }  // namespace lczero
