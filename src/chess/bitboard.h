@@ -1,6 +1,6 @@
 /*
   This file is part of Leela Chess Zero.
-  Copyright (C) 2018 The LCZero Authors
+  Copyright (C) 2018-2019 The LCZero Authors
 
   Leela Chess is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ class BoardSquare {
  public:
   constexpr BoardSquare() {}
   // As a single number, 0 to 63, bottom to top, left to right.
-  // 0 is a1, 8 is b1, 63 is h8.
+  // 0 is a1, 8 is a2, 63 is h8.
   constexpr BoardSquare(std::uint8_t num) : square_(num) {}
   // From row(bottom to top), and col(left to right), 0-based.
   constexpr BoardSquare(int row, int col) : BoardSquare(row * 8 + col) {}
@@ -177,6 +177,10 @@ class BitBoard {
     return board_ == other.board_;
   }
 
+  bool operator!=(const BitBoard& other) const {
+    return board_ != other.board_;
+  }
+
   BitIterator<BoardSquare> begin() const { return board_; }
   BitIterator<BoardSquare> end() const { return 0; }
 
@@ -195,7 +199,7 @@ class BitBoard {
   }
 
   // Applies a mask to the bitboard (intersects).
-  BitBoard& operator*=(const BitBoard& a) {
+  BitBoard& operator&=(const BitBoard& a) {
     board_ &= a.board_;
     return *this;
   }
@@ -206,8 +210,13 @@ class BitBoard {
   }
 
   // Returns union (bitwise OR) of two boards.
-  friend BitBoard operator+(const BitBoard& a, const BitBoard& b) {
+  friend BitBoard operator|(const BitBoard& a, const BitBoard& b) {
     return {a.board_ | b.board_};
+  }
+
+  // Returns intersection (bitwise AND) of two boards.
+  friend BitBoard operator&(const BitBoard& a, const BitBoard& b) {
+    return {a.board_ & b.board_};
   }
 
   // Returns bitboard with one bit reset.
@@ -218,11 +227,6 @@ class BitBoard {
   // Returns difference (bitwise AND-NOT) of two boards.
   friend BitBoard operator-(const BitBoard& a, const BitBoard& b) {
     return {a.board_ & ~b.board_};
-  }
-
-  // Returns intersection (bitwise AND) of two boards.
-  friend BitBoard operator*(const BitBoard& a, const BitBoard& b) {
-    return {a.board_ & b.board_};
   }
 
  private:

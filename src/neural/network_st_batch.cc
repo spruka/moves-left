@@ -41,6 +41,10 @@ SingleThreadBatchingNetwork::NewComputation() {
   return std::make_unique<SingleThreadBatchingNetworkComputation>(this);
 }
 
+bool SingleThreadBatchingNetwork::MovesLeftSupported() const {
+  return parent_->MovesLeftSupported();
+}
+
 void SingleThreadBatchingNetwork::Reset() {
   assert(computations_pending_ == 0);
   parent_computation_ = parent_->NewComputation();
@@ -65,6 +69,14 @@ void SingleThreadBatchingNetworkComputation::ComputeBlocking() {
 
 float SingleThreadBatchingNetworkComputation::GetQVal(int sample) const {
   return network_->parent_computation_->GetQVal(sample - start_idx_);
+}
+
+float SingleThreadBatchingNetworkComputation::GetDVal(int sample) const {
+  return network_->parent_computation_->GetDVal(sample - start_idx_);
+}
+
+float SingleThreadBatchingNetworkComputation::GetMVal(int sample) const {
+  return network_->parent_computation_->GetMVal(sample - start_idx_);
 }
 
 float SingleThreadBatchingNetworkComputation::GetPVal(int sample,

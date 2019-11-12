@@ -36,6 +36,7 @@
 #include <unordered_set>
 #include <utility>
 #include "utils/exception.h"
+#include "utils/logging.h"
 #include "utils/string.h"
 #include "version.h"
 
@@ -71,7 +72,7 @@ ParseCommand(const std::string& line) {
   // If empty line, return empty command.
   if (token.empty()) return {};
 
-  auto command = kKnownCommands.find(token);
+  const auto command = kKnownCommands.find(token);
   if (command == kKnownCommands.end()) {
     throw Exception("Unknown command: " + line);
   }
@@ -95,14 +96,14 @@ ParseCommand(const std::string& line) {
 std::string GetOrEmpty(
     const std::unordered_map<std::string, std::string>& params,
     const std::string& key) {
-  auto iter = params.find(key);
+  const auto iter = params.find(key);
   if (iter == params.end()) return {};
   return iter->second;
 }
 
 int GetNumeric(const std::unordered_map<std::string, std::string>& params,
                const std::string& key) {
-  auto iter = params.find(key);
+  const auto iter = params.find(key);
   if (iter == params.end()) {
     throw Exception("Unexpected error");
   }
@@ -121,14 +122,13 @@ bool ContainsKey(const std::unordered_map<std::string, std::string>& params,
                  const std::string& key) {
   return params.find(key) != params.end();
 }
-
 }  // namespace
 
 void UciLoop::RunLoop() {
   std::cout.setf(std::ios::unitbuf);
   std::string line;
   while (std::getline(std::cin, line)) {
-    if (debug_log_) debug_log_ << '>' << line << std::endl << std::flush;
+    LOGFILE << ">> " << line;
     try {
       auto command = ParseCommand(line);
       // Ignore empty line.
@@ -156,7 +156,7 @@ bool UciLoop::DispatchCommand(
     if (ContainsKey(params, "fen") == ContainsKey(params, "startpos")) {
       throw Exception("Position requires either fen or startpos");
     }
-    std::vector<std::string> moves =
+    const std::vector<std::string> moves =
         StrSplitAtWhitespace(GetOrEmpty(params, "moves"));
     CmdPosition(GetOrEmpty(params, "fen"), moves);
   } else if (command == "go") {
@@ -207,14 +207,6 @@ bool UciLoop::DispatchCommand(
   return true;
 }
 
-void UciLoop::SetLogFilename(const std::string& filename) {
-  if (filename.empty()) {
-    debug_log_.close();
-  } else {
-    debug_log_.open(filename.c_str(), std::ios::app);
-  }
-}
-
 void UciLoop::SendResponse(const std::string& response) {
   SendResponses({response});
 }
@@ -223,7 +215,7 @@ void UciLoop::SendResponses(const std::vector<std::string>& responses) {
   static std::mutex output_mutex;
   std::lock_guard<std::mutex> lock(output_mutex);
   for (auto& response : responses) {
-    if (debug_log_) debug_log_ << '<' << response << std::endl << std::flush;
+    LOGFILE << "<< " << response;
     std::cout << response << std::endl;
   }
 }

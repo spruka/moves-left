@@ -50,6 +50,14 @@ class MuxingComputation : public NetworkComputation {
     return parent_->GetQVal(sample + idx_in_parent_);
   }
 
+  float GetDVal(int sample) const override {
+    return parent_->GetDVal(sample + idx_in_parent_);
+  }
+
+  float GetMVal(int sample) const override {
+    return parent_->GetMVal(sample + idx_in_parent_);
+  }
+
   float GetPVal(int sample, int move_id) const override {
     return parent_->GetPVal(sample + idx_in_parent_, move_id);
   }
@@ -80,7 +88,7 @@ class MuxingComputation : public NetworkComputation {
 
 class MuxingNetwork : public Network {
  public:
-  MuxingNetwork(const Weights& weights, const OptionsDict& options) {
+  MuxingNetwork(const WeightsFile& weights, const OptionsDict& options) {
     // int threads, int max_batch)
     //: network_(std::move(network)), max_batch_(max_batch) {
 
@@ -97,7 +105,7 @@ class MuxingNetwork : public Network {
     }
   }
 
-  void AddBackend(const std::string& name, const Weights& weights,
+  void AddBackend(const std::string& name, const WeightsFile& weights,
                   const OptionsDict& opts) {
     const int nn_threads = opts.GetOrDefault<int>("threads", 1);
     const int max_batch = opts.GetOrDefault<int>("max_batch", 256);
@@ -115,6 +123,15 @@ class MuxingNetwork : public Network {
 
   std::unique_ptr<NetworkComputation> NewComputation() override {
     return std::make_unique<MuxingComputation>(this);
+  }
+
+  bool MovesLeftSupported() const override {
+    for (auto &network : networks_) {
+      if (!network->MovesLeftSupported()) {
+        return false;
+      }
+    }
+    return true;
   }
 
   void Enqueue(MuxingComputation* computation) {
@@ -203,8 +220,12 @@ void MuxingComputation::ComputeBlocking() {
   dataready_cv_.wait(lock, [this]() { return dataready_; });
 }
 
+std::unique_ptr<Network> MakeMuxingNetwork(const WeightsFile& weights,
+                                           const OptionsDict& options) {
+  return std::make_unique<MuxingNetwork>(weights, options);
+}
+
+REGISTER_NETWORK("multiplexing", MakeMuxingNetwork, -1000)
+
 }  // namespace
-
-REGISTER_NETWORK("multiplexing", MuxingNetwork, -1000)
-
 }  // namespace lczero

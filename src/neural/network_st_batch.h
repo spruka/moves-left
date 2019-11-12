@@ -52,6 +52,7 @@ class SingleThreadBatchingNetwork : public Network {
  public:
   SingleThreadBatchingNetwork(std::unique_ptr<Network> parent);
   std::unique_ptr<NetworkComputation> NewComputation() override;
+  bool MovesLeftSupported() const override;
 
   // Start a fresh batch.
   void Reset();
@@ -76,6 +77,8 @@ class SingleThreadBatchingNetworkComputation : public NetworkComputation {
   int GetBatchSize() const override { return batch_size_; }
   // Returns Q value of @sample.
   float GetQVal(int sample) const override;
+  float GetDVal(int sample) const override;
+  float GetMVal(int sample) const override;
   // Returns P value @move_id of @sample.
   float GetPVal(int sample, int move_id) const override;
 
